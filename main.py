@@ -130,3 +130,6 @@ async def ask(req: AskRequest):
                 "distance": dist
             })
     return {"question": req.question, "results": hits}
+@app.get("/")
+def root():
+    return {"message": "DocuQuery API. See /docs"}

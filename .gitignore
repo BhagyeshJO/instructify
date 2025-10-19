@@ -1,0 +1,10 @@
+﻿.venv/
+__pycache__/
+chroma/
+storage/
+*.pyc
+*.bin
+*.sqlite3
+*.pdf
+.DS_Store
+Thumbs.db

@@ -1,0 +1,8 @@
+﻿/.venv/
+/__pycache__/
+/chroma/
+/storage/
+*.sqlite3
+*.bin
+*.pdf
+upload_response.json

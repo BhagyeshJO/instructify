@@ -1,8 +1,16 @@
-﻿/.venv/
-/__pycache__/
-/chroma/
-/storage/
-*.sqlite3
-*.bin
-*.pdf
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+.venv/
+
+# App data
+chroma/
+storage/
 upload_response.json
+
+# Editors
+.vscode/
+.idea/

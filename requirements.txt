@@ -1,13 +1,10 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
 
 fastapi
-uvicorn[standard]
+uvicorn
 python-multipart
 pdfplumber
 chromadb==0.5.11
 sentence-transformers==3.0.1
 pydantic==2.9.2
-huggingface-hub
-torch==2.5.1+cpu
---extra-index-url https://download.pytorch.org/whl/cpu
-

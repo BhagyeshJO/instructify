@@ -1,10 +1,16 @@
-﻿.venv/
+﻿# Python
 __pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+.venv/
+
+# App data
 chroma/
 storage/
-*.pyc
-*.bin
-*.sqlite3
-*.pdf
-.DS_Store
-Thumbs.db
+upload_response.json
+
+# Editors
+.vscode/
+.idea/

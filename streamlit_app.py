@@ -160,10 +160,9 @@ def upload_pdf(file) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         return payload
     except requests.RequestException as exc:
-
-def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
-    try:
-        response = requests.post(
+    def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
+        try:
+         response = requests.post(
             f"{API_URL}/ask",
             json={"question": question, "top_k": top_k},
             timeout=30,

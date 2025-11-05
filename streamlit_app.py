@@ -151,7 +151,6 @@ def list_documents() -> List[Dict[str, Any]]:
 
 
 def upload_pdf(file) -> Optional[Dict[str, Any]]:
-    files = {"file": (file.name, file.getvalue(), file.type or "application/pdf")}
     try:
         response = requests.post(f"{API_URL}/upload", files=files, timeout=30)
         if response.headers.get("content-type", "").startswith("application/json"):
@@ -161,8 +160,6 @@ def upload_pdf(file) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         return payload
     except requests.RequestException as exc:
-        return {"error": str(exc), "detail": getattr(exc.response, "text", "")}
-
 
 def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
     try:

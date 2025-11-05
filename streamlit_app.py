@@ -32,7 +32,12 @@ st.markdown(
             --border-radius: 18px;
         }}
         .main {{
-            background: linear-gradient(180deg, rgba(30,58,138,0.08) 0%, rgba(37,99,235,0.12) 45%, rgba(244,247,255,1) 100%);
+            background: linear-gradient(
+                180deg,
+                rgba(30,58,138,0.08) 0%,
+                rgba(37,99,235,0.12) 45%,
+                rgba(244,247,255,1) 100%
+            );
         }}
         .block-container {{
             padding-top: 2.2rem;
@@ -105,9 +110,7 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("### Connection")
-    st.markdown(
-        f"**API base URL**\n\n`{API_URL}`"
-    )
+    st.markdown(f"**API base URL**\n\n`{API_URL}`")
     st.caption(
         "Set the `DOCUQUERY_API_URL` environment variable to point at a remote FastAPI deployment."
     )
@@ -125,7 +128,9 @@ st.markdown(
         <div class="dq-pill">Blue & white minimal workspace</div>
         <div>
             <h1 style="margin-bottom:0; color: var(--primary-blue);">DocuQuery Workspace</h1>
-            <p style="margin-top:0.3rem; color: var(--muted-text);">Upload PDFs, ask questions, and review supporting evidence.</p>
+            <p style="margin-top:0.3rem; color: var(--muted-text);">
+                Upload PDFs, ask questions, and review supporting evidence.
+            </p>
         </div>
     </div>
     """,
@@ -151,8 +156,11 @@ def list_documents() -> List[Dict[str, Any]]:
 
 
 def upload_pdf(file) -> Optional[Dict[str, Any]]:
+    # Build the 'files' payload for requests
+    files = {"file": (file.name, file.getvalue(), "application/pdf")}
     try:
         response = requests.post(f"{API_URL}/upload", files=files, timeout=30)
+        # Try to parse JSON; fall back to text
         if response.headers.get("content-type", "").startswith("application/json"):
             payload = response.json()
         else:
@@ -160,14 +168,26 @@ def upload_pdf(file) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         return payload
     except requests.RequestException as exc:
-    def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
-        try:
-         response = requests.post(
+        err_detail = ""
+        if getattr(exc, "response", None) is not None:
+            try:
+                err_detail = exc.response.json().get("detail", exc.response.text)
+            except Exception:
+                err_detail = exc.response.text
+        return {"error": str(exc), "detail": err_detail}
+
+
+def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
+    try:
+        response = requests.post(
             f"{API_URL}/ask",
             json={"question": question, "top_k": top_k},
             timeout=30,
         )
-        payload = response.json()
+        if response.headers.get("content-type", "").startswith("application/json"):
+            payload = response.json()
+        else:
+            payload = {"detail": response.text}
         response.raise_for_status()
         return payload
     except requests.RequestException as exc:
@@ -175,7 +195,7 @@ def upload_pdf(file) -> Optional[Dict[str, Any]]:
         if getattr(exc, "response", None) is not None:
             try:
                 err_detail = exc.response.json().get("detail", exc.response.text)
-            except Exception:  # noqa: BLE001 - streamlit surface only
+            except Exception:
                 err_detail = exc.response.text
         return {"error": str(exc), "detail": err_detail}
 
@@ -195,7 +215,8 @@ with col_upload:
             result = upload_pdf(uploaded_file)
         if result and "error" not in result:
             upload_status.success(
-                f"✅ Uploaded `{uploaded_file.name}` — indexed pages: {result.get('page_count', '?')}"
+                f"✅ Uploaded `{uploaded_file.name}` — indexed pages: "
+                f"{result.get('page_count', '?')}"
             )
         else:
             error_message = result.get("detail") if result else "Unknown error"
@@ -224,7 +245,9 @@ with col_query:
         height=120,
         label_visibility="collapsed",
     )
-    top_k = st.slider("Number of passages to retrieve", min_value=3, max_value=12, value=5)
+    top_k = st.slider(
+        "Number of passages to retrieve", min_value=3, max_value=12, value=5
+    )
     ask_btn = st.button("Get answer", key="ask_btn")
 
     if ask_btn:
@@ -233,6 +256,7 @@ with col_query:
         else:
             with st.spinner("Contacting DocuQuery API..."):
                 response = ask_question(question.strip(), top_k=top_k)
+
             if "error" in response:
                 detail = response.get("detail") or response["error"]
                 ask_status.error(f"Unable to retrieve answer: {detail}")
@@ -240,6 +264,8 @@ with col_query:
                 hits_placeholder.empty()
             else:
                 ask_status.success("Answer ready")
+
+                # handle different response shapes
                 answer = response.get("answer") or response.get("answer", {}).get("answer")
                 if isinstance(answer, dict):
                     answer_text = answer.get("answer", "")
@@ -252,10 +278,13 @@ with col_query:
                         unsafe_allow_html=True,
                     )
                 else:
-                    answer_placeholder.info("No direct answer returned. Review the passages below.")
+                    answer_placeholder.info(
+                        "No direct answer returned. Review the passages below."
+                    )
 
                 citations = response.get("citations") or []
                 hits = response.get("results") or response.get("hits") or []
+
                 with hits_placeholder:
                     if hits:
                         st.markdown("#### Supporting passages")
@@ -264,6 +293,7 @@ with col_query:
                             page = hit.get("page")
                             snippet = hit.get("snippet") or hit.get("text") or ""
                             meta_line = f"Page {page}" if page is not None else ""
+
                             if citations and idx <= len(citations):
                                 citation = citations[idx - 1]
                                 if isinstance(citation, dict):
@@ -275,6 +305,7 @@ with col_query:
                                     if cite_page is not None:
                                         parts.append(f"p.{cite_page}")
                                     meta_line = " · ".join(parts) or meta_line
+
                             st.markdown(
                                 f"<div class='dq-hit'>"
                                 f"<h4>{title}</h4>"

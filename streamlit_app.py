@@ -151,12 +151,6 @@ def list_documents() -> List[Dict[str, Any]]:
 
 
 def upload_pdf(file) -> Optional[Dict[str, Any]]:
-    file.seek(0)
-    file_bytes = file.read()
-    if not file_bytes:
-        return {"error": "empty_file", "detail": "The selected file is empty."}
-
-    files = {"file": (file.name, file_bytes, file.type or "application/pdf")}
     try:
         response = requests.post(f"{API_URL}/upload", files=files, timeout=30)
         if response.headers.get("content-type", "").startswith("application/json"):
@@ -166,18 +160,6 @@ def upload_pdf(file) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         return payload
     except requests.RequestException as exc:
-        detail = ""
-        if getattr(exc, "response", None) is not None:
-            content_type = exc.response.headers.get("content-type", "")
-            if content_type.startswith("application/json"):
-                try:
-                    detail = exc.response.json().get("detail", "")
-                except Exception:  # noqa: BLE001 - best effort surface of server error
-                    detail = exc.response.text
-            else:
-                detail = exc.response.text
-        return {"error": str(exc), "detail": detail}
-
 
 def ask_question(question: str, top_k: int = 5) -> Dict[str, Any]:
     try:
